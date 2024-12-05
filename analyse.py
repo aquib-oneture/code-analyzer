@@ -1,11 +1,13 @@
+import os
 import re
 import sys
 import json
+from pathlib import Path
 from FileSystemUtils import FSUtils
 
 class CodeAnalyser:
-    SETTINGS_FILE = "config.json"
-    __CURRENT_MODE = [] 
+    SETTINGS_FILE = os.path.join(Path(__file__).absolute(),"config.json")
+    _CURRENT_MODE = [] 
 
     __MODES_BY_FILETYPE_CACHE = {}
 
