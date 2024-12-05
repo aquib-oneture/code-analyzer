@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import argparse
 from pathlib import Path
 from FileSystemUtils import FSUtils
 
@@ -44,22 +45,39 @@ class CodeAnalyser:
         if match:
             return match.group(0)
         return None
+
+    def _write_to_file(self, filename):
+        """
+        Creates a function that writes to the specified file.
         
-    def display_results(self, results:dict):
+        Args:
+            filename (str): Path to the output file
+        
+        Returns:
+            function: A function that writes a single line to the file
+        """
+        def write_line(line):
+            with open(filename, 'a', encoding="utf-8") as f:
+                f.write(str(line) + '\n')
+        return write_line
+        
+    def display_results(self, results:dict, output_file=None):
+        # Determine output method (console or file)
+        output_func = print if output_file is None else self._write_to_file(output_file)
+        
         for file in results:
-            print("📄" + file)
-
+            output_func("📄" + file)
             counter = 1
-
             for routine in results[file]:
-                print(f"\t {counter}) ", routine)
+                output_func(f"\t {counter}) {routine}")
                 counter += 1
-            print("\n")
+            output_func("\n")
         
         if (len(self.__ERRORS) > 0):
-            print(f"UNABLE TO READ {len(self.__ERRORS)} files due to errors")
+            output_func(f"UNABLE TO READ {len(self.__ERRORS)} files due to errors")
             for error in self.__ERRORS:
-                print(error)
+                output_func(error)
+
 
     def multi_file_analyze(self, files: list):
         results = {}
@@ -129,19 +147,30 @@ class CodeAnalyser:
 
 
 if __name__ == "__main__":
-    mode = sys.argv[1] 
-    directory_path = sys.argv[2] 
-
+    # Use argparse for more robust command-line argument handling
+    parser = argparse.ArgumentParser(description='Code Analyser')
+    parser.add_argument('mode', help='Analysis mode')
+    parser.add_argument('directory_path', help='Directory to analyze')
+    parser.add_argument('-o', '--output', help='Output file path', default=None)
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    # Create analyser
     analyser = CodeAnalyser()
     analyser.set_log_mode("quiet")
-
-    if not analyser.support_exists(mode):
+    
+    # Check mode support
+    if not analyser.support_exists(args.mode):
         print("Support not exists for the mode")
         sys.exit(1)
-
-    analyser.add_mode(mode)
-
-    fullpath_files = FSUtils.get_all_files_recursively(directory_path)
-
+    
+    # Add mode and get files
+    analyser.add_mode(args.mode)
+    fullpath_files = FSUtils.get_all_files_recursively(args.directory_path)
+    
+    # Analyze files
     results = analyser.multi_file_analyze(files=fullpath_files)
-    analyser.display_results(results)
+    
+    # Display results
+    analyser.display_results(results, output_file=args.output)
