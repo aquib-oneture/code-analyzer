@@ -42,7 +42,7 @@ class CodeAnalyser:
     def extract_routine(self, line, pattern):
         match = re.search(pattern, line)
         if match:
-            return match.group(1)
+            return match.group(0)
         return None
         
     def display_results(self, results:dict):
