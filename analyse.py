@@ -26,7 +26,7 @@ class CodeAnalyser:
             if extension in self.__MODES_BY_FILETYPE_CACHE:
                 return self.__MODES_BY_FILETYPE_CACHE[extension]
 
-            if mode in self.settings and "extensions" in mode and extension in self.settings["extensions"]:
+            if mode in self.settings and "extensions" in self.settings[mode] and extension in self.settings[mode]["extensions"]:
                 self.__MODES_BY_FILETYPE_CACHE[extension] = mode
                 return mode
 
@@ -38,12 +38,16 @@ class CodeAnalyser:
             return match.group(1)
         return None
         
-    def display_results(results:dict):
+    def display_results(self, results:dict):
         for file in results:
             print("📄" + file)
 
+            counter = 1
+
             for routine in results[file]:
-                print("\t", routine)
+                print(f"\t {counter}) ", routine)
+                counter += 1
+            print("\n")
 
     def multi_file_analyze(self, files: list):
         results = {}
@@ -65,9 +69,10 @@ class CodeAnalyser:
                 continue
                 
             routines_in_file = self.analyze(filepath, self.settings[mode]["routine"])
-            
-            # if routines exists in file then add them to result
-            results[filepath] = routines_in_file
+
+            if (len(routines_in_file) > 0):
+                # if routines exists in file then add them to result
+                results[filepath] = routines_in_file
 
         return results
 
@@ -89,14 +94,16 @@ class CodeAnalyser:
 
 
 if __name__ == "__main__":
-    mode = sys.argv[1]
-    directory_path = sys.argv[2]
+    mode = sys.argv[1] 
+    directory_path = sys.argv[2] 
 
     analyser = CodeAnalyser()
 
     if not analyser.support_exists(mode):
         print("Support not exists for the mode")
         sys.exit(1)
+
+    analyser.add_mode(mode)
 
     fullpath_files = FSUtils.get_all_files_recursively(directory_path)
 
